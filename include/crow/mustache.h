@@ -513,7 +513,7 @@ namespace crow
         {
             inline std::string& get_template_base_directory_ref()
             {
-                static std::string template_base_directory = "templates";
+                static std::string template_base_directory = "templates/";
                 return template_base_directory;
             }
         }
