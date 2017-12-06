@@ -1,0 +1,15 @@
+copy-windows:
+  stage: deploy
+  tags:
+    - windows
+  script:
+    - if not exist "E:/dev/Crow" mkdir "E:/dev/Crow"
+    - (robocopy include "E:/dev/Crow" /E /XD .git /NFL /NDL /NJH /NP /NS /NC) ^& if %errorLevel% leq 8 exit /B 0
+
+copy-linux:
+  stage: deploy
+  tags:
+    - linux
+  script:
+    - if [ ! -d ~/Crow ]; then mkdir ~/Crow; fi
+    - cp -r include ~/Crow/
