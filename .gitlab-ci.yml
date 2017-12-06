@@ -12,4 +12,4 @@ copy-linux:
     - linux
   script:
     - if [ ! -d ~/Crow ]; then mkdir ~/Crow; fi
-    - cp -r include ~/Crow/
+    - cp -r include/. ~/Crow/
