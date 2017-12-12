@@ -11,5 +11,6 @@ copy-linux:
   tags:
     - linux
   script:
-    - if [ ! -d ~/Crow ]; then mkdir ~/Crow; fi
-    - cp -r include/. ~/Crow/
+    - cp -r include/. ~/libraries/include
+  variables:
+    GIT_STRATEGY: none
