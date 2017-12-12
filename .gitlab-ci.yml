@@ -12,5 +12,3 @@ copy-linux:
     - linux
   script:
     - cp -r include/. ~/libraries/include
-  variables:
-    GIT_STRATEGY: none
