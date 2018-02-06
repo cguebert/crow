@@ -11,4 +11,5 @@ copy-linux:
   tags:
     - linux
   script:
-    - cp -r include/. ~/libraries/include
+    - if [ ! -d ~/crow ]; then mkdir ~/crow; fi
+    - cp -r include/. ~/crow
