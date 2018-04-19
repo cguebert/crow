@@ -45,6 +45,7 @@ namespace crow
         void close()
         {
             boost::system::error_code ec;
+            socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
             socket_.close(ec);
         }
 
@@ -91,6 +92,7 @@ namespace crow
         void close()
         {
             boost::system::error_code ec;
+            raw_socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
             raw_socket().close(ec);
         }
 
