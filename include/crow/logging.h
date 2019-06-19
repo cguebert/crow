@@ -64,7 +64,7 @@ namespace crow
         public:
 
 
-            logger(std::string prefix, LogLevel level) : level_(level) {
+            logger(std::string /*prefix*/, LogLevel level) : level_(level) {
             }
             ~logger() {
     #ifdef CROW_ENABLE_LOGGING
