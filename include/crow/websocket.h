@@ -18,8 +18,8 @@ namespace crow
             Payload,
         };
 
-		struct connection
-		{
+        struct connection
+        {
             virtual void send_binary(const std::string& msg) = 0;
             virtual void send_text(const std::string& msg) = 0;
             virtual void close(const std::string& msg = "quit") = 0;
@@ -30,58 +30,59 @@ namespace crow
 
         private:
             void* userdata_;
-		};
+        };
 
-		template <typename Adaptor>
+        template <typename Adaptor>
         class Connection : public connection
         {
-			public:
-				Connection(const crow::request& req, Adaptor&& adaptor, 
-						std::function<void(crow::websocket::connection&)> open_handler,
-						std::function<void(crow::websocket::connection&, const std::string&, bool)> message_handler,
-						std::function<void(crow::websocket::connection&, const std::string&)> close_handler,
-						std::function<void(crow::websocket::connection&)> error_handler,
-						std::function<bool(const crow::request&)> accept_handler)
-					: adaptor_(std::move(adaptor)), open_handler_(std::move(open_handler)), message_handler_(std::move(message_handler)), close_handler_(std::move(close_handler)), error_handler_(std::move(error_handler))
-					, accept_handler_(std::move(accept_handler))
-				{
-					if (!boost::iequals(req.get_header_value("upgrade"), "websocket"))
-					{
-						adaptor.close();
-						delete this;
-						return;
-					}
+            public:
+                Connection(const crow::request& req, Adaptor&& adaptor, 
+                        std::function<void(crow::websocket::connection&)> open_handler,
+                        std::function<void(crow::websocket::connection&, const std::string&, bool)> message_handler,
+                        std::function<void(crow::websocket::connection&, const std::string&)> close_handler,
+                        std::function<void(crow::websocket::connection&)> error_handler,
+                        std::function<bool(const crow::request&)> accept_handler)
+                    : adaptor_(std::move(adaptor)), open_handler_(std::move(open_handler)), message_handler_(std::move(message_handler)), close_handler_(std::move(close_handler)), error_handler_(std::move(error_handler))
+                    , accept_handler_(std::move(accept_handler))
+                {
+                    if (!boost::iequals(req.get_header_value("upgrade"), "websocket"))
+                    {
+                        adaptor.close();
+                        delete this;
+                        return;
+                    }
 
-					if (accept_handler_)
-					{
-						if (!accept_handler_(req))
-						{
-							adaptor.close();
-							delete this;
-							return;
-						}
-					}
+                    if (accept_handler_)
+                    {
+                        if (!accept_handler_(req))
+                        {
+                            adaptor.close();
+                            delete this;
+                            return;
+                        }
+                    }
 
-					// Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
-					// Sec-WebSocket-Version: 13
+                    // Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+                    // Sec-WebSocket-Version: 13
                     std::string magic = req.get_header_value("Sec-WebSocket-Key") +  "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
                     sha1::SHA1 s;
                     s.processBytes(magic.data(), magic.size());
                     uint8_t digest[20];
                     s.getDigestBytes(digest);   
                     start(crow::utility::base64encode((char*)digest, 20));
-				}
+                }
 
                 template<typename CompletionHandler>
                 void dispatch(CompletionHandler handler)
                 {
-                    adaptor_.get_io_service().dispatch(handler);
+                    boost::asio::dispatch(adaptor_.get_executor(), handler);
+                    //adaptor_.get_executor().dispatch(handler);
                 }
 
                 template<typename CompletionHandler>
                 void post(CompletionHandler handler)
                 {
-                    adaptor_.get_io_service().post(handler);
+                    adaptor_.get_executor().post(handler);
                 }
 
                 void send_pong(const std::string& msg)
@@ -491,8 +492,8 @@ namespace crow
                     if (sending_buffers_.empty() && !is_reading)
                         delete this;
                 }
-			private:
-				Adaptor adaptor_;
+            private:
+                Adaptor adaptor_;
 
                 std::vector<std::string> sending_buffers_;
                 std::vector<std::string> write_buffers_;
@@ -514,11 +515,11 @@ namespace crow
                 bool pong_received_{false};
                 bool is_close_handler_called_{false};
 
-				std::function<void(crow::websocket::connection&)> open_handler_;
-				std::function<void(crow::websocket::connection&, const std::string&, bool)> message_handler_;
-				std::function<void(crow::websocket::connection&, const std::string&)> close_handler_;
-				std::function<void(crow::websocket::connection&)> error_handler_;
-				std::function<bool(const crow::request&)> accept_handler_;
+                std::function<void(crow::websocket::connection&)> open_handler_;
+                std::function<void(crow::websocket::connection&, const std::string&, bool)> message_handler_;
+                std::function<void(crow::websocket::connection&, const std::string&)> close_handler_;
+                std::function<void(crow::websocket::connection&)> error_handler_;
+                std::function<bool(const crow::request&)> accept_handler_;
         };
     }
 }

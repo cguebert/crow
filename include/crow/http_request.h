@@ -19,7 +19,7 @@ namespace crow
         return empty;
     }
 
-	struct DetachHelper;
+    struct DetachHelper;
 
     struct request
     {
@@ -32,7 +32,7 @@ namespace crow
         std::string remoteIpAddress;
 
         void* middleware_context{};
-        boost::asio::io_service* io_service{};
+        boost::asio::executor executor{};
 
         request()
             : method(HTTPMethod::Get)
@@ -57,13 +57,13 @@ namespace crow
         template<typename CompletionHandler>
         void post(CompletionHandler handler)
         {
-            io_service->post(handler);
+            executor.post(handler);
         }
 
         template<typename CompletionHandler>
         void dispatch(CompletionHandler handler)
         {
-            io_service->dispatch(handler);
+            executor.dispatch(handler);
         }
 
     };

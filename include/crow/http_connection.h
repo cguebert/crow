@@ -183,7 +183,7 @@ namespace crow
     {
     public:
         Connection(
-            boost::asio::io_service& io_service, 
+            boost::asio::io_context& io_context, 
             Handler* handler, 
             const std::string& server_name,
             std::tuple<Middlewares...>* middlewares,
@@ -191,7 +191,7 @@ namespace crow
             detail::dumb_timer_queue& timer_queue,
             typename Adaptor::context* adaptor_ctx_
             ) 
-            : adaptor_(io_service, adaptor_ctx_), 
+            : adaptor_(io_context, adaptor_ctx_), 
             handler_(handler), 
             parser_(this), 
             server_name_(server_name),
@@ -285,20 +285,20 @@ namespace crow
                     is_invalid_request = true;
                     res = response(400);
                 }
-				if (parser_.is_upgrade())
-				{
-					if (req.get_header_value("upgrade") == "h2c")
-					{
-						// TODO HTTP/2
+                if (parser_.is_upgrade())
+                {
+                    if (req.get_header_value("upgrade") == "h2c")
+                    {
+                        // TODO HTTP/2
                         // currently, ignore upgrade header
-					}
+                    }
                     else
                     {
                         close_connection_ = true;
                         handler_->handle_upgrade(req, res, std::move(adaptor_));
                         return;
                     }
-				}
+                }
             }
 
             CROW_LOG_INFO << "Request: " << boost::lexical_cast<std::string>(adaptor_.remote_endpoint()) << " " << this << " HTTP/" << parser_.http_major << "." << parser_.http_minor << ' '
@@ -313,7 +313,7 @@ namespace crow
 
                 ctx_ = detail::context<Middlewares...>();
                 req.middleware_context = (void*)&ctx_;
-                req.io_service = &adaptor_.get_io_service();
+                req.executor = adaptor_.get_executor();
                 detail::middleware_call_helper<0, decltype(ctx_), decltype(*middlewares_), Middlewares...>(*middlewares_, req, res, ctx_);
 
                 if (!res.completed_)

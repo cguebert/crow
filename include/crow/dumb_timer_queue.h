@@ -41,7 +41,7 @@ namespace crow
 
             void process()
             {
-                if (!io_service_)
+                if (!io_context_)
                     return;
 
                 auto now = std::chrono::steady_clock::now();
@@ -61,9 +61,9 @@ namespace crow
                 }
             }
 
-            void set_io_service(boost::asio::io_service& io_service)
+            void set_io_context(boost::asio::io_context& io_context)
             {
-                io_service_ = &io_service;
+                io_context_ = &io_context;
             }
 
             dumb_timer_queue() noexcept
@@ -73,7 +73,7 @@ namespace crow
         private:
 
             int tick{5};
-            boost::asio::io_service* io_service_{};
+            boost::asio::io_context* io_context_{};
             std::deque<std::pair<decltype(std::chrono::steady_clock::now()), std::function<void()>>> dq_;
             int step_{};
         };

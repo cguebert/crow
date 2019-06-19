@@ -27,8 +27,8 @@ namespace crow
     {
     public:
     Server(Handler* handler, std::string bindaddr, uint16_t port, std::tuple<Middlewares...>* middlewares = nullptr, uint16_t concurrency = 1, typename Adaptor::context* adaptor_ctx = nullptr)
-            : acceptor_(io_service_, tcp::endpoint(boost::asio::ip::address::from_string(bindaddr), port)),
-            tick_timer_(io_service_),
+            : acceptor_(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(bindaddr), port)),
+            tick_timer_(io_context_),
             handler_(handler),
             concurrency_(concurrency),
             port_(port),
@@ -62,7 +62,7 @@ namespace crow
                 concurrency_ = 1;
 
             for(int i = 0; i < concurrency_;  i++)
-                io_service_pool_.emplace_back(new boost::asio::io_service());
+                io_context_pool_.emplace_back(new boost::asio::io_context());
             get_cached_date_str_pool_.resize(concurrency_);
             timer_queue_pool_.resize(concurrency_);
 
@@ -105,8 +105,8 @@ namespace crow
                             detail::dumb_timer_queue timer_queue;
                             timer_queue_pool_[i] = &timer_queue;
 
-                            timer_queue.set_io_service(*io_service_pool_[i]);
-                            boost::asio::deadline_timer timer(*io_service_pool_[i]);
+                            timer_queue.set_io_context(*io_context_pool_[i]);
+                            boost::asio::deadline_timer timer(*io_context_pool_[i]);
                             timer.expires_from_now(boost::posix_time::seconds(1));
 
                             std::function<void(const boost::system::error_code& ec)> handler;
@@ -124,9 +124,9 @@ namespace crow
                             {
                                 try 
                                 {
-                                    if (io_service_pool_[i]->run() == 0)
+                                    if (io_context_pool_[i]->run() == 0)
                                     {
-                                        // when io_service.run returns 0, there are no more works to do.
+                                        // when io_context.run returns 0, there are no more works to do.
                                         break;
                                     }
                                 } catch(std::exception& e)
@@ -157,31 +157,31 @@ namespace crow
             do_accept();
 
             std::thread([this]{
-                io_service_.run();
+                io_context_.run();
                 CROW_LOG_INFO << "Exiting.";
             }).join();
         }
 
         void stop()
         {
-            io_service_.stop();
-            for(auto& io_service:io_service_pool_)
-                io_service->stop();
+            io_context_.stop();
+            for(auto& io_context:io_context_pool_)
+                io_context->stop();
         }
 
     private:
-        asio::io_service& pick_io_service()
+        asio::io_context& pick_io_context()
         {
             // TODO load balancing
             roundrobin_index_++;
-            if (roundrobin_index_ >= io_service_pool_.size())
+            if (roundrobin_index_ >= io_context_pool_.size())
                 roundrobin_index_ = 0;
-            return *io_service_pool_[roundrobin_index_];
+            return *io_context_pool_[roundrobin_index_];
         }
 
         void do_accept()
         {
-            asio::io_service& is = pick_io_service();
+            asio::io_context& is = pick_io_context();
             auto p = new Connection<Adaptor, Handler, Middlewares...>(
                 is, handler_, server_name_, middlewares_,
                 get_cached_date_str_pool_[roundrobin_index_], *timer_queue_pool_[roundrobin_index_],
@@ -205,8 +205,8 @@ namespace crow
         }
 
     private:
-        asio::io_service io_service_;
-        std::vector<std::unique_ptr<asio::io_service>> io_service_pool_;
+        asio::io_context io_context_;
+        std::vector<std::unique_ptr<asio::io_context>> io_context_pool_;
         std::vector<detail::dumb_timer_queue*> timer_queue_pool_;
         std::vector<std::function<std::string()>> get_cached_date_str_pool_;
         tcp::acceptor acceptor_;
