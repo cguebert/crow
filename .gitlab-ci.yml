@@ -3,8 +3,8 @@ copy-windows:
   tags:
     - windows
   script:
-    - if not exist "E:/dev/Crow" mkdir "E:/dev/Crow"
-    - (robocopy include "E:/dev/Crow" /E /XD .git /NFL /NDL /NJH /NP /NS /NC) ^& if %errorLevel% leq 8 exit /B 0
+    - md -Force "E:/dev/Crow"
+    - cp include\* -Destination E:/dev/Crow\ -Recurse -Force -Exclude .git
 
 copy-linux:
   stage: deploy
