@@ -271,7 +271,7 @@ inline char * qs_scanvalue(const char * key, const char * qs, char * val, size_t
 #else
         strncpy(val, qs, (val_len - 1)<(i + 1) ? (val_len - 1) : (i + 1));
 #endif
-		qs_decode(val);
+        qs_decode(val);
     }
     else
     {
@@ -400,6 +400,21 @@ namespace crow
                 else
                     break;
             }
+            return ret;
+        }
+
+        std::unordered_multimap<std::string, std::string> get_map() const
+        {
+            std::unordered_multimap<std::string, std::string> ret;
+
+            for (const auto& kv : key_value_pairs_)
+            {
+                // we rely on the unambiguous '=' to find the value in our k/v pair
+                const auto key_len = strcspn(kv, "=");
+                const auto skip = (kv[key_len] == '=') ? key_len + 1 : key_len;
+                ret.emplace(std::string(kv, key_len), kv + skip);
+            }
+
             return ret;
         }
 
