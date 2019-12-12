@@ -329,7 +329,6 @@ namespace crow
             return *this;
         }
 
-
         query_string(std::string url)
             : url_(std::move(url))
         {
@@ -340,6 +339,11 @@ namespace crow
 
             int count = qs_parse(&url_[0], &key_value_pairs_[0], MAX_KEY_VALUE_PAIRS_COUNT);
             key_value_pairs_.resize(count);
+        }
+
+        bool empty() const
+        {
+            return key_value_pairs_.empty();
         }
 
         void clear() 
